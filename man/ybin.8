@@ -103,7 +103,7 @@ You should only need to define this option if \fBofpath\fR(8) fails.
 .TP
 .BR \-i ,\  \-\-install\ \fIboot-file
 Use \fIboot-file\fR as the primary boot loader executable, instead of
-the default \fI/usr/local/lib/yaboot/yaboot\fR.
+the default \fI/usr/lib/yaboot/yaboot\fR.
 .TP
 .BR \-C ,\  \-\-config\ \fIconfig-file
 Use \fIconfig-file\fR as the \fBybin\fR/\fByaboot\fR(8) configuration
@@ -176,8 +176,8 @@ Print out usage information and exit.
 Print out the version number and exit.
 .SH FILES
 .nf
-/usr/local/lib/yaboot/yaboot \- boot loader executable
-/usr/local/lib/yaboot/ofboot \- OpenFirmware boot script
+/usr/lib/yaboot/yaboot \- boot loader executable
+/usr/lib/yaboot/ofboot \- OpenFirmware boot script
 /etc/yaboot.conf \- boot loader/ybin configuration file
 .fi
 .SH ENVIRONMENT
@@ -193,7 +193,7 @@ It is important that your system use a secure
 program, otherwise \fBybin\fR will be vulnerable to race conditions.
 The Debian mktemp is derived from OpenBSD and thus should be secure.
 
-\fI/usr/local/lib/yaboot/ofboot\fR now contains code executed by /bin/sh (by
+\fI/usr/lib/yaboot/ofboot\fR now contains code executed by /bin/sh (by
 \fBybin\fR). It is thus critical that it not be writable by anyone but
 root.  It is also critical that \fI/etc/yaboot.conf\fR not be writable
 by anyone but root since a different \fIofboot\fR script could be

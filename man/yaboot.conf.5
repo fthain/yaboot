@@ -136,7 +136,7 @@ Example:
   boot=/dev/hda2
   device=hd:
   partition=3
-  magicboot=/usr/local/lib/yaboot/ofboot
+  magicboot=/usr/lib/yaboot/ofboot
   timeout=50
   root=/dev/hda3
   read-only
@@ -228,7 +228,7 @@ executable so this can be optional.  When this option is defined the
 magicboot script will be executed by OF automatically at boot (instead
 of the \fBinstall\fR file.)  See man \fBbootstrap\fR(8) for more
 information on this.  As of ybin 0.22 you should set this to
-/usr/local/lib/yaboot/ofboot which is a autoconfiguring first stage
+/usr/lib/yaboot/ofboot which is a autoconfiguring first stage
 loader for yaboot.  It is capable of presenting a dual boot menu for
 GNU/Linux, MacOS and MacOSX.  If dual booting is not required or
 configured it will simply load yaboot directly.  You must specify this
@@ -307,7 +307,7 @@ You must also have the BSD bootloader
 When you define this option you will be presented with a simple menu at
 bootup allowing you to hit L to boot GNU/Linux or B to boot BSD (along
 with other choices if configured).  This will only work if you are
-using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When this is
+using the new \fI/usr/lib/yaboot/ofboot\fR script.  When this is
 set to a unix device node (ie \fI/dev/hda11\fR) then ybin will use the
 \fBofpath\fR(8) utility to determine the OpenFirmware device path.
 .TP
@@ -316,7 +316,7 @@ The OpenFirmware or Unix device path to a MacOS 8.* or 9.* boot
 partition.  When you define this option you will be presented with a
 simple menu at bootup allowing you to hit L to boot GNU/Linux or M to
 boot MacOS (along with other choices if configured).  This will only
-work if you are using the new \fI/usr/local/lib/yaboot/ofboot\fR
+work if you are using the new \fI/usr/lib/yaboot/ofboot\fR
 script.  When this is set to a unix device node (ie \fI/dev/hda11\fR)
 then ybin will use the \fBofpath\fR(8) utility to determine the
 OpenFirmware device path.
@@ -326,7 +326,7 @@ The OpenFirmware or unix device path to a MacOS X boot partition.
 When you define this option you will be presented with a simple menu
 at bootup allowing you to hit L to boot GNU/Linux or X to boot MacOSX
 (along with other choices if configured).  This will only work if you
-are using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When
+are using the new \fI/usr/lib/yaboot/ofboot\fR script.  When
 this is set to a unix device node (ie \fI/dev/hda11\fR) then ybin will
 use the \fBofpath\fR(8) utility to determine the OpenFirmware device
 path.
@@ -347,7 +347,7 @@ The OpenFirmware or unix device path to a Darwin boot partition.
 When you define this option you will be presented with a simple menu
 at bootup allowing you to hit L to boot GNU/Linux or D to boot Darwin
 (along with other choices if configured).  This will only work if you
-are using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When
+are using the new \fI/usr/lib/yaboot/ofboot\fR script.  When
 this is set to a unix device node (ie \fI/dev/hda11\fR) then ybin will
 use the \fBofpath\fR(8) utility to determine the OpenFirmware device
 path.
@@ -591,8 +591,8 @@ device=hd:
 root=/dev/hda3
 partition=3
 timeout=20
-install=/usr/local/lib/yaboot/yaboot
-magicboot=/usr/local/lib/yaboot/ofboot
+install=/usr/lib/yaboot/yaboot
+magicboot=/usr/lib/yaboot/ofboot
 fgcolor=black
 bgcolor=green
 default=Linux
