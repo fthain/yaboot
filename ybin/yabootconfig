@@ -103,6 +103,7 @@ Generate a working /etc/yaboot.conf.
 			       default: determined from {chroot}/etc/fstab
   -b, --boot                 set bootstrap partition, Example: /dev/hda2
 			       default: first type: Apple_Bootstrap partition
+  -C, --config               set config file name (Example: /etc/yaboot.conf)
       --kernel-args          add an append= line with specified arguments
   -q, --quiet                don't ask any questions/confirmation
       --noinstall            don't automatically run mkofboot
@@ -325,6 +326,16 @@ if [ $# != 0 ] ; then
                     KERNARGS="$2"
                     shift 2
                 else
+                    echo 1>&2 "$PRG: option requires an argument $1"
+                    echo 1>&2 "Try \`$PRG --help' for more information."
+                    exit 1
+                fi
+		;;
+	    -C|--config)
+		if [ -n "$2" ]; then
+		    CONFIG="$2"
+		    shift 2
+		else
                     echo 1>&2 "$PRG: option requires an argument $1"
                     echo 1>&2 "Try \`$PRG --help' for more information."
                     exit 1
