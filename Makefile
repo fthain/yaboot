@@ -124,6 +124,9 @@ mkofboot:
 		false; 									\
 	fi
 
+%.i: %.c
+	$(CC) $(YBCFLAGS) -E -o $@ $<
+
 %.o: %.c
 	$(CC) $(YBCFLAGS) -c -o $@ $<
 

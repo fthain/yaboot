@@ -1018,6 +1018,7 @@ yaboot_text_ui(void)
      static struct boot_param_t	params;
      void		*initrd_base;
      unsigned long	initrd_size;
+     unsigned long	initrd_end;
      kernel_entry_t      kernel_entry;
      char*               loc=NULL;
      loadinfo_t          loadinfo;
@@ -1147,8 +1148,67 @@ yaboot_text_ui(void)
 			      initrd_read = file.fs->read(&file, len, initrd_more);
 			      DEBUG_F("  block at %p rc=%lu\n",initrd_more,initrd_read);
 			      initrd_size += initrd_read;
+			      initrd_end = initrd_more+INITRD_CHUNKSIZE;
 			 }
 		    }
+		    /* If we netbooted and got this far, we may have filled the
+		     * RMA.  We're about the free the TFTP load buffer to we
+		     * can "shuffle" things around so that the booted kernel
+		     * has some memory to run with */
+                    if (!is_elf64(&loadinfo)) {
+                         DEBUG_F("Not running a 64-kernel\n");
+                    /* Is this check enough? */
+                    } else if (loadinfo.base == file.buffer + file.buffer_sz) {
+                         DEBUG_F("file->buffer %lx -> %lx (%lx)\n",
+                                 (unsigned long)(file.buffer),
+                                 (unsigned long)(file.buffer+file.buffer_sz),
+                                 (unsigned long)(file.buffer_sz));
+                         DEBUG_F("vmlinux %lx -> %lx (%lx)\n",
+                                 (unsigned long)(loadinfo.base),
+                                 (unsigned long)(loadinfo.base+loadinfo.memsize),
+                                 (unsigned long)(loadinfo.memsize));
+                         DEBUG_F("initrd %lx -> %lx (%lx)\n",
+                                 (unsigned long)(initrd_base),
+                                 (unsigned long)(initrd_base+initrd_size),
+                                 (unsigned long)(initrd_size));
+
+                         /* Check to see if we're near the top of the RMA */
+                         /* Cheat and assume the RMA == 128Mb */
+                         if (initrd_end > 0x7000000) {
+                              unsigned long new_initrd_end, free_len;
+                              unsigned long initrd_claim_len = initrd_end - (unsigned long)initrd_base;
+
+                              memmove(file.buffer, loadinfo.base,
+                                      loadinfo.memsize+initrd_size);
+                              loadinfo.base = file.buffer;
+                              initrd_base = loadinfo.base+loadinfo.memsize;
+
+                              new_initrd_end = (unsigned long)initrd_base+initrd_claim_len;
+                              free_len = initrd_end - (unsigned long)new_initrd_end;
+                              file.buffer = NULL;
+                              file.buffer_sz = 0;
+                              memset((void*)new_initrd_end, 0x0, free_len);
+                              prom_release((void*)new_initrd_end, free_len);
+
+                              DEBUG_F("Releaseing from 0x%08lx -> 0x%08lx\n",
+                                      new_initrd_end, free_len);
+
+                              DEBUG_F("file->buffer %lx -> %lx (%lx)\n",
+                                      (unsigned long)(file.buffer),
+                                      (unsigned long)(file.buffer+file.buffer_sz),
+                                      (unsigned long)(file.buffer_sz));
+                              DEBUG_F("vmlinux %lx -> %lx (%lx)\n",
+                                      (unsigned long)(loadinfo.base),
+                                      (unsigned long)(loadinfo.base+loadinfo.memsize),
+                                      (unsigned long)(loadinfo.memsize));
+                              DEBUG_F("initrd %lx -> %lx (%lx)\n",
+                                      (unsigned long)(initrd_base),
+                                      (unsigned long)(initrd_base+initrd_size),
+                                      (unsigned long)(initrd_size));
+                         } else {
+                              DEBUG_F("Looks like we do not need to move the kernel\n");
+                         }
+                    }
 		    file.fs->close(&file);
 		    memset(&file, 0, sizeof(file));
 	       }

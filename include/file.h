@@ -68,6 +68,7 @@ struct boot_file_t {
 	ino_t		inode;
 	__u64           pos;
 	unsigned char*	buffer;
+	__u64		buffer_sz;
 	__u64   	len;
 //	unsigned int	dev_blk_size;
 //	unsigned int	part_start;

@@ -214,6 +214,7 @@ of_net_open(struct boot_file_t* file,
 	  DEBUG_LEAVE(FILE_IOERR);
 	  return FILE_IOERR;
      }
+     file->buffer_sz = LOAD_BUFFER_SIZE;
      memset(file->buffer, 0, LOAD_BUFFER_SIZE);
 
      DEBUG_F("TFP...\n");
