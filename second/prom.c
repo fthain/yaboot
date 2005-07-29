@@ -622,6 +622,9 @@ prom_claim (void *virt, unsigned int size, unsigned int align)
      void *ret;
 
      ret = call_prom ("claim", 3, 1, virt, size, align);
+     /* Pegasos II SmartFirmware returns zero for failure, usefully */
+     if (virt && !ret)
+	  ret = (void *)-1;
      if (ret == (void *)-1)
           prom_printf("ERROR: claim of 0x%x at 0x%x failed\n", size, (int)virt);
      else
