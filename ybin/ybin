@@ -829,6 +829,10 @@ util_install()
 	    return 1
 	fi
 
+	## N.B.: SELinux does not like bootloader executables writing to 
+	## root's homedir, so we lie about HOME here.
+	export HOME=/boot
+
 	## hmount is really more of a way to make sure we have a valid HFS
 	## filesystem before proceding, and hcopy requires it...
 	hmount "$boot" > /dev/null
