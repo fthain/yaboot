@@ -608,13 +608,17 @@ void check_password(char *str)
 	  if (!strncmp (password, "$1$", 3)) {
 	       if (!check_md5_password((unsigned char*)passwdbuff, (unsigned char*)password))
 		    return;
+	  } else
+#endif /* USE_MD5_PASSWORDS */
+	  if (!strncmp (password, "$5$", 3)) {
+	       if (!strcmp (password, sha256_crypt (passwdbuff, password)))
+		    return;
+	  } else if (!strncmp (password, "$6$", 3)) {
+	       if (!strcmp (password, sha512_crypt (passwdbuff, password)))
+		    return;
 	  }
 	  else if (!strcmp (password, passwdbuff))
 	       return;
-#else /* !MD5 */
-	  if (!strcmp (password, passwdbuff))
-	       return;
-#endif /* USE_MD5_PASSWORDS */
 	  if (i < 2) {
 	       prom_sleep(1);
 	       prom_printf ("Incorrect password.  Try again.");

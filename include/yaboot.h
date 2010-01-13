@@ -58,4 +58,7 @@ extern char bootdevice[];
 extern char *bootpath;
 extern int bootpartition;
 
+extern char *sha256_crypt (const char *key, const char *salt);
+extern char *sha512_crypt (const char *key, const char *salt);
+
 #endif

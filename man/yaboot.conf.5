@@ -258,8 +258,9 @@ first 2000 bytes of this file will be read.
 .TP
 .BI "password=" password
 Protect booting by a password. The password is given in either
-cleartext or an md5 hash (of the same format as used in GNU/Linux
-passwd files)in the configuration file.  Because of that, the
+cleartext or an hash (of the same format as used in GNU/Linux
+passwd files, using MD5, SHA-256 or SHA-512) in the configuration file.
+Because of that, the
 configuration file should be only readable by the superuser and the
 password should differ if possible from other passwords on the system.
 See
