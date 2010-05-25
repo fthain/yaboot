@@ -164,5 +164,6 @@ struct bootp_packet {
 struct bootp_packet * prom_get_netinfo (void);
 char * prom_get_mac (struct bootp_packet * packet);
 char * prom_get_ip (struct bootp_packet * packet);
+void *prom_rma_size(void);
 
 #endif

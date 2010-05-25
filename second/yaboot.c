@@ -123,6 +123,7 @@ char *password = NULL;
 struct boot_fspec_t boot;
 int _machine = _MACH_Pmac;
 int flat_vmlinux;
+u64 rma_size = 0;
 
 #ifdef CONFIG_COLOR_TEXT
 
@@ -214,6 +215,9 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 		    _machine = _MACH_chrp;
 	  }
      }
+
+     rma_size = (u64)prom_rma_size();
+     prom_printf("System has %Ld Mbytes in RMA\n", rma_size >> 20);
 
      DEBUG_F("Running on _machine = %d\n", _machine);
      DEBUG_SLEEP;
@@ -1177,8 +1181,8 @@ yaboot_text_ui(void)
                                  (unsigned long)(initrd_size));
 
                          /* Check to see if we're near the top of the RMA */
-                         /* Cheat and assume the RMA == 128Mb */
-                         if (initrd_end > 0x7000000) {
+                         /* Cheat and assume RTAS will be ~16Mb */
+                         if (initrd_end > rma_size - 0x1000000) {
                               unsigned long new_initrd_end, free_len;
                               unsigned long initrd_claim_len = initrd_end - (unsigned long)initrd_base;
 

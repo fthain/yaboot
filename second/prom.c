@@ -587,7 +587,16 @@ void *
 prom_claim_chunk(void *virt, unsigned int size, unsigned int align)
 {
      void *found, *addr;
-     for(addr=virt; addr <= (void*)PROM_CLAIM_MAX_ADDR;
+     static void *claim_max_addr = -1;
+
+     if (claim_max_addr == (void*)-1) {
+          claim_max_addr = prom_rma_size();
+          if (claim_max_addr < PROM_CLAIM_MAX_ADDR)
+               claim_max_addr = PROM_CLAIM_MAX_ADDR;
+          DEBUG_F("Setting claim_max_addr to 0x%x\n", (int)claim_max_addr);
+     }
+
+     for(addr=virt; addr <= (void*)claim_max_addr;
          addr+=(0x100000/sizeof(addr))) {
           found = call_prom("claim", 3, 1, addr, size, 0);
           if (found != (void *)-1) {
@@ -859,6 +868,32 @@ void prom_print_available(void)
      }
 
      prom_printf("\n");
+}
+
+void *prom_rma_size(void)
+{
+     int rc;
+     ihandle n;
+     u64 *start, *end;
+     unsigned char buf[16];		/* This will store 2 64-bit values */
+
+     DEBUG_ENTER;
+
+     n = prom_finddevice("/memory@0");
+     DEBUG_F("n = %x\n", (int)n);
+     rc = prom_getprop(n, "reg", &buf, 16);
+     DEBUG_F("rc = %d\n", rc);
+
+     /* If the getprop() failed fill the buffer with some known value */
+     if (rc == -1)
+          memset(&buf[0], 0xff, 16);
+
+     start = (u64*)&buf[0];
+     end   = (u64*)&buf[8];
+     DEBUG_F("start=0x%Lx, end=0x%Lx\n", *start, *end);
+
+     DEBUG_LEAVE(0);
+     return (void*)*end;
 }
 
 /*
