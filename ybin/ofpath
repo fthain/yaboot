@@ -464,6 +464,40 @@ scsi_ofpath2()
                 return 0
         fi
 
+        local fc=${DEVSPEC%@*}
+        fc=${fc##/*/}
+
+        if [[ -e /proc/device-tree$DEVSPEC/device_type ]]; then
+                local devtype=$(cat /proc/device-tree$DEVSPEC/device_type);
+                if [[ $devtype = "fcp" || $devtype = "scsi-fcp" ]]; then
+                        fc="fibre-channel";
+                fi
+        fi
+
+        if [[ $fc = "fibre-channel" ]]; then
+                local wwpn=$(get_fc_wwpn "$DEVICE_PATH/../../fc_remote_ports*")
+                local ofpath=$DEVSPEC
+
+                if [[ ! -e /proc/device-tree$DEVSPEC/disk ]]; then
+                        for dir in `find /proc/device-tree$DEVSPEC -type d`; do
+                                if [[ -e $dir/disk ]]; then
+                                        ofpath=${dir##/proc/device-tree}
+                                        break;
+                                fi
+                        done
+                fi
+
+                ofpath=$(printf "%s/disk@%s" $ofpath $wwpn)
+
+                if [[ $DEVICE_LUN != "0" ]]; then
+                        local fc_lun=$(get_fc_scsilun $DEVICE_LUN)
+                        ofpath=$(printf "%s,%s" $ofpath $fc_lun)
+                fi
+
+                echo "$ofpath"
+                return 0
+        fi
+
         echo 1>&2 "$PRG: Driver: $SCSI_DRIVER is not supported"
         return 1
 }
