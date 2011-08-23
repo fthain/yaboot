@@ -285,17 +285,20 @@ scsiinfo()
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVHOST=$DEVHOST"
 
 	if [ "$DEVTYPE" = "Direct-Access" ] || [ "$DEVTYPE" = "Direct-Access-RBC" ] ; then
-	    DEVCOUNT="$(($DEVCOUNT + 1))"
-	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVCOUNT=$DEVCOUNT"
-	    if [ "$SUBDEV" = "$DEVCOUNT" ] ; then
-		DEVICE_HOST=$DEVHOST
-		DEVICE_BUS=$DEVBUS
-		DEVICE_ID=$DEVID
-		DEVICE_LUN=$DEVLUN
-		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVICE_HOST=$DEVICE_HOST"
-		break
-	    fi
-	fi
+	    ls /sys/bus/scsi/devices/$DEVHOST:$DEVBUS:$DEVID:$DEVLUN/scsi_disk* > /dev/null 2>&1
+	    if [ $? -eq 0 ] ; then
+                DEVCOUNT="$(($DEVCOUNT + 1))"
+                [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVCOUNT=$DEVCOUNT"
+                if [ "$SUBDEV" = "$DEVCOUNT" ] ; then
+                        DEVICE_HOST=$DEVHOST
+                        DEVICE_BUS=$DEVBUS
+                        DEVICE_ID=$DEVID
+                        DEVICE_LUN=$DEVLUN
+                        [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVICE_HOST=$DEVICE_HOST"
+                        break
+                fi
+            fi
+        fi
     done
 
     ## figure out what the scsi driver is, it is /proc/scsi/dirname.
