@@ -116,15 +116,41 @@ linecount()
 ## small tr replacment which handles a specific need of this script.
 smalltr()
 {
-    case "$1" in
-	a) echo 1 ;; b) echo 2 ;; c) echo 3 ;; d) echo 4 ;; e) echo 5 ;; f) echo 6 ;;
-	g) echo 7 ;; h) echo 8 ;; i) echo 9 ;; j) echo 10 ;; k) echo 11 ;; l) echo 12 ;;
-	m) echo 13 ;; n) echo 14 ;; o) echo 15 ;; p) echo 16 ;;
-	1) echo a ;; 2) echo b ;; 3) echo c ;; 4) echo d ;; 5) echo e ;;
-	6) echo f ;; 7) echo g ;; 8) echo h ;; 9) echo i ;; 10) echo j ;;
-	11) echo k ;; 12) echo l ;; 13) echo m ;; 14) echo n ;; 15) echo o ;;
-	16) echo p ;;
-    esac
+        local i a d t val out mod cur
+
+        val="$1"
+        out="0"
+
+        d=$(printf "%d\n" \'${val:0:1})
+
+        if (( $d > 57 )) ; then  # is a letter
+                for ((i=0; i < ${#val}; i++)) ; do
+                        d=$(printf "%d\n" \'${val:$i:1})
+                        a=$(($d - 96))
+                        out=$(($out * 26))
+                        out=$(($out + $a))
+                done
+
+        else  # is a number
+                t=$val
+                out=""
+
+                while ((t != 0)) ; do
+                        mod=$(($t % 26))
+                        t=$(($t / 26))
+                        if (($mod == 0)) ; then
+                                cur="z"
+                                t=$(($t - 1))
+                        else
+                                mod=$(($mod + 96))
+                                cur=$(echo $mod | gawk '{printf "%c", $1}')
+                        fi
+                        out="$cur$out"
+                done
+        fi
+
+        echo "$out"
+
     return 0
 }
 
