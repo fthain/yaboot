@@ -242,9 +242,17 @@ scsiinfo()
 	DEVTYPE="$(v=$(echo ${DEVINFO##*Type: }) ; echo ${v%% *})"
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVTYPE=$DEVTYPE"
 
+	## get the device LUN.
+	DEVLUN="$(v=$(echo ${DEVINFO##*Lun: }) ; n=$(echo ${v%% *}) ; echo ${n#*0})"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVLUN=$DEVLUN"
+
 	## get the device id.
 	DEVID="$(v=$(echo ${DEVINFO##*Id: }) ; n=$(echo ${v%% *}) ; echo ${n#*0})"
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVID=$DEVID"
+
+	## get the device bus.
+	DEVBUS="$(v=$(echo ${DEVINFO##*Channel: }) ; n=$(echo ${v%% *}) ; echo ${n#*0})"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVBUS=$DEVBUS"
 
 	## get the scsi host id.
 	DEVHOST="$(v=$(echo ${DEVINFO##*Host: scsi}) ; echo ${v%% *})"
@@ -255,7 +263,9 @@ scsiinfo()
 	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVCOUNT=$DEVCOUNT"
 	    if [ "$SUBDEV" = "$DEVCOUNT" ] ; then
 		DEVICE_HOST=$DEVHOST
+		DEVICE_BUS=$DEVBUS
 		DEVICE_ID=$DEVID
+		DEVICE_LUN=$DEVLUN
 		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVICE_HOST=$DEVICE_HOST"
 		break
 	    fi
@@ -272,6 +282,190 @@ scsiinfo()
     [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: SCSI_HOSTNUMBER=$SCSI_HOSTNUMBER"
 
     return 0
+}
+
+read_attr()
+{
+        local ATTR=$1
+        local START=$2
+        local OLDDIR=$(pwd)
+        local RET
+
+        cd -P "$START"
+        while [[ $PWD != "/" ]]; do
+                ls $ATTR > /dev/null 2>&1
+                if [[ $? -eq 0 ]]; then
+                        RET=$(cat $ATTR)
+                        cd $OLDDIR
+                        echo "$RET"
+                        return 0
+                fi
+                cd ..
+        done
+
+        cd $OLDDIR
+        echo 1>&2 "$PRG: Cannot find $RET for $DEVICE"
+        exit 1
+}
+
+read_dev_attr()
+{
+        local ATTR=$1
+        local DEVICE="$DEVICE_HOST:$DEVICE_BUS:$DEVICE_ID:$DEVICE_LUN"
+        local START="/sys/bus/scsi/devices/$DEVICE"
+
+        read_attr $ATTR $START
+}
+
+read_parent_attr()
+{
+        local ATTR=$1
+        local DEVICE="$DEVICE_HOST:$DEVICE_BUS:$DEVICE_ID:$DEVICE_LUN"
+        local START="/sys/bus/scsi/devices/$DEVICE/.."
+
+        read_attr $ATTR $START
+}
+
+get_vdisk_lun()
+{
+        local B C D
+        typeset -i B C D
+
+        B=$((0x$DEVICE_ID << 8))
+        C=$((0x$DEVICE_BUS << 5))
+        D=$((0x$DEVICE_LUN))
+
+        local vdiskno vdisk
+        typeset -i vdiskno
+        vdiskno=$((0x8000 | $B | $C | $D ))
+        vdisk=${vdiskno##-}
+
+        vdisk=$(printf "%x" $vdisk)
+        local extrazeroes="000000000000"
+        echo $vdisk$extrazeroes
+}
+
+int_to_scsilun()
+{
+        local lunint=$1
+        local A B C D
+
+        A=$(( ($lunint >> 8) & 0xff ))
+        B=$(($lunint & 0xff))
+        C=$(( ($lunint >> 24) & 0xff ))
+        D=$(( ($lunint >> 16) & 0xff ))
+
+        local lunstr=$(printf "%02x%02x%02x%02x00000000" $A $B $C $D)
+        lunstr=$(echo $lunstr | sed 's/^[0]*//')
+        echo "$lunstr"
+}
+
+get_fc_scsilun()
+{
+        local L=$(echo "$DEVICE_LUN"|gawk '{$1=tolower($1);print}')
+        L=$(printf "%d" $L)
+
+        local fc_lun=$(int_to_scsilun $L)
+        echo "$fc_lun"
+}
+
+get_fc_wwpn()
+{
+        local start_dir=$1
+
+        for f in `find -H $start_dir -maxdepth 2 -name port_name`; do
+                local wwpn=$(cat $f)
+                break
+        done
+
+        # strip the leading 0x
+        wwpn=${wwpn:2}
+        echo "$wwpn"
+}
+
+scsi_ofpath2()
+{
+        local DEVSPEC=$(read_parent_attr devspec)
+        local COMPAT=$(cat "/proc/device-tree$DEVSPEC/compatible")
+        local DEVICE_PATH="/sys/bus/scsi/devices/$DEVICE_HOST:$DEVICE_BUS:$DEVICE_ID:$DEVICE_LUN"
+
+        case "$COMPAT" in
+            IBM,v-scsi)
+                local vdisk=$(get_vdisk_lun)
+                if [[ $PARTITION = "" ]]; then
+                        echo "$DEVSPEC/disk@$vdisk"
+                else
+                        echo "$DEVSPEC/disk@$vdisk:$PARTITION"
+                fi
+                return 0
+                ;;
+            IBM,vfc-client)
+                local vfc_lun=$(get_fc_scsilun)
+                local wwpn=$(get_fc_wwpn "$DEVICE_PATH/../../fc_remote_ports*")
+                if [[ $DEVICE_LUN != "0" ]]; then
+                        local vfc_lun=$(get_fc_scsilun)
+                        echo "$DEVSPEC/disk@$wwpn,$vfc_lun"
+                else
+                        echo "$DEVSPEC/disk@$wwpn"
+                fi
+                return 0
+                ;;
+            *)
+                ;;
+        esac
+
+        if [[ -d "/proc/device-tree$DEVSPEC/sas" ]]; then
+                local vendor_id=$(read_parent_attr vendor)
+                local sas_addr
+
+                if [[ $vendor_id = "0x1000" ]]; then
+                        sas_addr=$(read_dev_attr sas_address)
+                        sas_addr=${sas_addr##0x}
+                        if [[ $DEVICE_LUN != "0" ]]; then
+                                local LUN=$(int_to_scsilun $DEVICE_LUN)
+                                echo "$DEVSPEC/sas/disk@$sas_addr,$LUN"
+                        else
+                                echo "$DEVSPEC/sas/disk@$sas_addr"
+                        fi
+                        return 0
+                fi
+
+                local fwtype="0"
+                if [[ -e /sys/class/scsi_host/host$DEVICE_HOST/fw_type ]]; then
+                        fwtype=$(cat /sys/class/scsi_host/host$DEVICE_HOST/fw_type)
+                fi
+
+                if [[ $fwtype = "1" ]]; then
+                        sas_addr=$(read_dev_attr device_id)
+                        sas_addr=${sas_addr##0x}
+                        if [[ $DEVICE_LUN != "0" ]]; then
+                                local LUN=$(int_to_scsilun $DEVICE_LUN)
+                                echo "$DEVSPEC/sas/disk@$sas_addr,$LUN"
+                        else
+                                echo "$DEVSPEC/sas/disk@$sas_addr"
+                        fi
+                else
+                        local B T L
+
+                        B=$(echo "$DEVICE_BUS"|gawk '{$1=tolower($1);print}')
+                        B=$(printf "%d" $B)
+                        T=$(echo "$DEVICE_ID"|gawk '{$1=tolower($1);print}')
+                        T=$(printf "%d" $T)
+                        L=$(echo "$DEVICE_LUN"|gawk '{$1=tolower($1);print}')
+                        L=$(printf "%d" $L)
+
+                        sas_addr=$(( ($B << 16) | ($T << 8) | $L ))
+                        if [[ $DEVICE_LUN != "0" ]]; then
+                                printf "%s/sas/disk@%x,%x\n" $DEVSPEC $sas_addr $DEVICE_LUN
+                        else
+                                printf "%s/sas/disk@%x\n" $DEVSPEC $sas_addr
+                        fi
+                fi
+                return 0
+        fi
+
+        echo 1>&2 "$PRG: Driver: $SCSI_DRIVER is not supported"
+        return 1
 }
 
 ## generic function that can find OF device paths for scsi devices,
@@ -321,11 +515,15 @@ scsi_ofpath()
             # sbp-2 driver may not have a dir in /proc/scsi
             HOST_LIST="$(for i in `find /proc/device-tree -name name` ; do
                         lgrep "$i" "sbp-2" ; done)"
-            if [ "$SCSI_HOSTNUMBER" = "" ] ; then
-                SCSI_HOSTNUMBER=1
+            if [ "$HOST_LIST" = "" ] ; then
+                scsi_ofpath2
+            else
+                if [ "$SCSI_HOSTNUMBER" = "" ] ; then
+                        SCSI_HOSTNUMBER=1
+                fi
+                DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
+                echo "${DEVICE_PATH##*device-tree}/disk@0:$PARTITION"
             fi
-            DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
-            echo "${DEVICE_PATH##*device-tree}/disk@0:$PARTITION"
 	    ;;
 	*)
 	    echo 1>&2 "$PRG: Driver: $SCSI_DRIVER is not supported"
