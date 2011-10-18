@@ -1574,9 +1574,9 @@ yaboot_main(void)
 	  setup_display();
 
      prom_get_chosen("bootargs", bootargs, sizeof(bootargs));
-     DEBUG_F("/chosen/bootargs = %s\n", bootargs);
+     prom_debug("/chosen/bootargs = %s\n", bootargs);
      prom_get_chosen("bootpath", bootdevice, BOOTDEVSZ);
-     DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
+     prom_debug("/chosen/bootpath = %s\n", bootdevice);
      if (prom_get_options("ibm,client-architecture-support-reboot",fw_nbr_reboots, FW_NBR_REBOOTSZ) == -1 )
         prom_get_options("ibm,fw-nbr-reboots",fw_nbr_reboots, FW_NBR_REBOOTSZ);
      fw_reboot_cnt = simple_strtol(fw_nbr_reboots,&endp,10);

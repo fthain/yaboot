@@ -245,16 +245,16 @@ extract_vendor_options(struct bootp_packet *packet, struct boot_fspec_t *result)
                     if ((result->subnetmask == NULL ||
                          *(result->subnetmask) == '\x0') && value != 0) {
                          result->subnetmask = ipv4_to_str(value);
-                         DEBUG_F("Storing %s as subnetmask from options\n",
-                                 result->subnetmask);
+                         prom_debug("Using bootp submetmask %s\n",
+                                    result->subnetmask);
                     }
                     break;
                case DHCP_ROUTERS:
                     if ((result->giaddr == NULL || *(result->giaddr) == '\x0')
                         && value != 0) {
                          result->giaddr = ipv4_to_str(value);
-                         DEBUG_F("Storing %s as gateway from options\n",
-                                 result->giaddr);
+                         prom_debug("Using bootp gateway %s\n",
+                                    result->giaddr);
                     }
                     break;
                }
@@ -276,25 +276,27 @@ extract_netinfo_args(struct boot_fspec_t *result)
      if (!packet)
           return;
 
-     DEBUG_F("We have a boot packet\n");
-     DEBUG_F(" siaddr = <%x>\n", packet->siaddr);
-     DEBUG_F(" ciaddr = <%x>\n", packet->ciaddr);
-     DEBUG_F(" yiaddr = <%x>\n", packet->yiaddr);
-     DEBUG_F(" giaddr = <%x>\n", packet->giaddr);
-
      /* Try to fallback to yiaddr if ciaddr is empty. Broken? */
      if (packet->ciaddr == 0 && packet->yiaddr != 0)
           packet->ciaddr = packet->yiaddr;
 
      if ((result->siaddr == NULL || *(result->siaddr) == '\x0')
-         && packet->siaddr != 0)
+         && packet->siaddr != 0) {
           result->siaddr = ipv4_to_str(packet->siaddr);
+          prom_debug("Using bootp siaddr %s\n", result->siaddr);
+     }
+
      if ((result->ciaddr == NULL || *(result->ciaddr) == '\x0')
-         && packet->ciaddr != 0)
+         && packet->ciaddr != 0) {
           result->ciaddr = ipv4_to_str(packet->ciaddr);
+          prom_debug("Using bootp ciaddr %s\n", result->ciaddr);
+     }
+
      if ((result->giaddr == NULL || *(result->giaddr) == '\x0')
-         && packet->giaddr != 0)
+         && packet->giaddr != 0) {
           result->giaddr = ipv4_to_str(packet->giaddr);
+          prom_debug("Using bootp giaddr %s\n", result->giaddr);
+     }
 
      extract_vendor_options(packet, result);
 
@@ -304,7 +306,7 @@ extract_netinfo_args(struct boot_fspec_t *result)
       *        redirections */
      if (result->giaddr == NULL) {
           result->giaddr = ipv4_to_str(packet->siaddr);
-          DEBUG_F("Forcing giaddr to siaddr <%s>\n", result->giaddr);
+          prom_debug("Forcing giaddr to siaddr <%s>\n", result->giaddr);
      }
 }
 
@@ -361,8 +363,6 @@ extract_netboot_args(char *imagepath, struct boot_fspec_t *result)
 {
      int ret;
 
-     DEBUG_F("imagepath = %s\n", imagepath);
-
      if (!imagepath)
 	  return 1;
 
@@ -372,16 +372,16 @@ extract_netboot_args(char *imagepath, struct boot_fspec_t *result)
 	  ret = extract_ipv4_args(imagepath, result);
      extract_netinfo_args(result);
 
-     DEBUG_F("ipv6 = <%d>\n", result->is_ipv6);
-     DEBUG_F("siaddr = <%s>\n", result->siaddr);
-     DEBUG_F("file = <%s>\n", result->file);
-     DEBUG_F("ciaddr = <%s>\n", result->ciaddr);
-     DEBUG_F("giaddr = <%s>\n", result->giaddr);
-     DEBUG_F("bootp_retries = <%s>\n", result->bootp_retries);
-     DEBUG_F("tftp_retries = <%s>\n", result->tftp_retries);
-     DEBUG_F("addl_params = <%s>\n", result->addl_params);
-     DEBUG_F("dhcpv6 = <%s>\n", result->dhcpv6);
-     DEBUG_F("blksize = <%s>\n", result->blksize);
+     prom_debug("ipv6 = <%d>\n", result->is_ipv6);
+     prom_debug("siaddr = <%s>\n", result->siaddr);
+     prom_debug("file = <%s>\n", result->file);
+     prom_debug("ciaddr = <%s>\n", result->ciaddr);
+     prom_debug("giaddr = <%s>\n", result->giaddr);
+     prom_debug("bootp_retries = <%s>\n", result->bootp_retries);
+     prom_debug("tftp_retries = <%s>\n", result->tftp_retries);
+     prom_debug("addl_params = <%s>\n", result->addl_params);
+     prom_debug("dhcpv6 = <%s>\n", result->dhcpv6);
+     prom_debug("blksize = <%s>\n", result->blksize);
 
      return ret;
 }

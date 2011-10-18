@@ -193,7 +193,7 @@ of_net_open(struct boot_file_t* file,
           strcat(buffer, filename);
      }
 
-     DEBUG_F("Opening: \"%s\"\n", buffer);
+     prom_debug("Opening: \"%s\"\n", buffer);
 
      file->of_device = prom_open(buffer);
 
