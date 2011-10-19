@@ -59,9 +59,10 @@ swap_open(struct boot_file_t* file, struct partition_t* part,
      DEBUG_ENTER;
      DEBUG_OPEN;
 
-     if (file->device_kind != FILE_DEVICE_BLOCK || part == NULL) {
-	  DEBUG_LEAVE(FILE_ERR_BADDEV);
-	  return FILE_ERR_BADDEV;
+     if (part == NULL) {
+          DEBUG_F("No partions on %s, not checking for swap\n", device_name);
+	  DEBUG_LEAVE(FILE_ERR_BAD_FSYS);
+	  return FILE_ERR_BAD_FSYS;
      }
 
      /* We assume that device is "short" and is correctly NULL terminsated */
