@@ -107,6 +107,13 @@ int posix_memalign(void **memptr, size_t alignment, size_t size)
     return 0;
 }
 
+void *calloc(size_t nmemb, size_t size)
+{
+	unsigned char *p = malloc(nmemb * size);
+	memset(p, 0x0, nmemb * size);
+	return p;
+}
+
 void *realloc(void *ptr, unsigned int size)
 {
     char *caddr, *oaddr = ptr;
