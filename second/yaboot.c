@@ -1197,7 +1197,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 {
      int			i;
      Elf32_Ehdr		*e = &(loadinfo->elf.elf32hdr);
-     Elf32_Phdr		*p, *ph;
+     Elf32_Phdr		*p, *ph = NULL;
      int			size = sizeof(Elf32_Ehdr) - sizeof(Elf_Ident);
      unsigned long	loadaddr;
 
@@ -1330,7 +1330,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
 {
      int			i;
      Elf64_Ehdr		*e = &(loadinfo->elf.elf64hdr);
-     Elf64_Phdr		*p, *ph;
+     Elf64_Phdr		*p, *ph = NULL;
      int			size = sizeof(Elf64_Ehdr) - sizeof(Elf_Ident);
      unsigned long	loadaddr;
 
