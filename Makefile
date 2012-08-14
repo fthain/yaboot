@@ -31,6 +31,7 @@ CC		:= $(CROSS)gcc
 LD		:= $(CROSS)ld
 AS		:= $(CROSS)as
 OBJCOPY		:= $(CROSS)objcopy
+STRIP		:= $(CROSS)strip
 
 # The flags for the yaboot binary.
 #
@@ -175,10 +176,10 @@ maintclean: clean cleandocs
 release: docs bindist clean
 
 strip: all
-	strip second/yaboot
-	strip --remove-section=.comment second/yaboot
-	strip util/addnote
-	strip --remove-section=.comment --remove-section=.note util/addnote
+	$(STRIP) second/yaboot
+	$(STRIP) --remove-section=.comment second/yaboot
+	$(STRIP) util/addnote
+	$(STRIP) --remove-section=.comment --remove-section=.note util/addnote
 
 install: all strip
 	install -d -o root -g root -m 0755 ${ROOT}/etc/
