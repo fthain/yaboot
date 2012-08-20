@@ -144,6 +144,8 @@ of_net_open(struct boot_file_t* file,
      char               *filename = NULL;
      char               *p;
      int                new_tftp;
+     prom_handle        root;
+     ihandle            prom_net;
 
      DEBUG_ENTER;
      DEBUG_OPEN;
@@ -165,11 +167,14 @@ of_net_open(struct boot_file_t* file,
      if (fspec->dev[strlen(fspec->dev)-1] != ':')
           strcat(buffer, ":");
 
-     /* If /packages/cas exists the we have a "new skool" tftp.
+     /* If /ibm,fw-net-compatibility exists the we have a "new skool" tftp.
       * This means that siaddr is the tftp server and that we can add
       * {tftp,bootp}_retrys, subnet mask and tftp block size to the load
       * method */
-     new_tftp = (prom_finddevice("/packages/cas") != PROM_INVALID_HANDLE);
+     new_tftp = 0;
+     root = prom_finddevice("/");
+     if (prom_getprop(root, "ibm,fw-net-compatibility", &prom_net, sizeof(ihandle)) > 0)
+          new_tftp = 1;
      DEBUG_F("Using %s tftp style\n", (new_tftp? "new": "old"));
 
      if (new_tftp) {
