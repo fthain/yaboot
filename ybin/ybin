@@ -507,12 +507,8 @@ checkconf()
 	[ "$nonvram" = 0 ] && echo 1>&2 "$PRG: OldWorld PowerMac, nvram will not be updated"
 	nonvram=1
     elif (cat /proc/cpuinfo 2> /dev/null | grep ^platform | grep -q 'pSeries') ; then
-	## IBM hardware does not need nvram update AFAICT
-	nonvram=1
 	ADDNOTE=yes
     elif (cat /proc/cpuinfo 2> /dev/null | grep ^platform | grep -q 'PowerNV') ; then
-	## IBM hardware does not need nvram update AFAICT
-	nonvram=1
 	ADDNOTE=yes
     else
 	#echo 1>&2 "$PRG: Warning: Unknown archetecture, $boot may not be bootable on this machine"
@@ -1156,6 +1152,17 @@ raw_install()
 	echo 1>&2 "$PRG: Installation failed."
 	return 1
     fi
+
+    ## update the boot-device variable in OF nvram.
+    if [ "$nonvram" = 0 ] ; then
+       [ "$VERBOSE" = 1 ] && echo "$PRG: Updating OpenFirmware boot-device variable in nvram..."
+       [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: boot-device=${ofboot}"
+       nvsetenv boot-device "${ofboot}"
+       if [ $? != 0 ] ; then
+          echo 1>&2 "$PRG: An error occured while updating nvram, we'll ignore it"
+       fi
+    fi
+
     sync ; sync
     [ "$VERBOSE" = 1 ] && echo "$PRG: Installation successful"
     return 0
