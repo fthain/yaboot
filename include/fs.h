@@ -45,7 +45,7 @@ struct fs_t {
 
 	int (*close)(	struct boot_file_t*	file);
 
-	unsigned int (*ino_size)(struct boot_file_t *file);
+	int (*ino_size)(struct boot_file_t *file, unsigned int *size);
 };
 
 extern const struct fs_t *fs_of;

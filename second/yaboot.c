@@ -76,6 +76,8 @@
 #define KERNEL_LINK_ADDR_PPC32	0xC0000000UL
 #define KERNEL_LINK_ADDR_PPC64	0xC000000000000000ULL
 
+#define INITRD_CHUNKSIZE 0x100000
+
 typedef struct {
      union {
 	  Elf32_Ehdr  elf32hdr;
@@ -1023,6 +1025,7 @@ yaboot_text_ui(void)
      loadinfo_t          loadinfo;
      void                *initrd_more,*initrd_want;
      unsigned long       initrd_read;
+     unsigned int        len = INITRD_CHUNKSIZE;
 
      loadinfo.load_loc = 0;
 
@@ -1112,19 +1115,18 @@ yaboot_text_ui(void)
 	       }
 	       prom_printf("Loading ramdisk...\n");
 	       result = open_file(&params.rd, &file);
+	       if (result == FILE_ERR_OK && file.fs->ino_size) {
+	            result = file.fs->ino_size(&file, &len);
+               }
 	       if (result != FILE_ERR_OK) {
 		    prom_printf("%s:%d,", params.rd.dev, params.rd.part);
 		    prom_perror(result, params.rd.file);
 	       }
 	       else {
-#define INITRD_CHUNKSIZE 0x100000
-		    unsigned int len = INITRD_CHUNKSIZE;
-
-		    /* We add a bit to the actual size so the loop below doesn't think
-		     * there is more to load.
+		    /* We add a bit to the actual size so the loop below
+		     * doesn't think there is more to load.
 		     */
-		    if (file.fs->ino_size && file.fs->ino_size(&file) > 0)
-			 len = file.fs->ino_size(&file) + 0x1000;
+                    len += 0x1000;
 
 		    initrd_base = prom_claim_chunk(loadinfo.base+loadinfo.memsize, len, 0);
 		    if (initrd_base == (void *)-1) {

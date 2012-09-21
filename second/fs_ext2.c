@@ -54,7 +54,7 @@ static int ext2_read(	struct boot_file_t*	file,
 static int ext2_seek(	struct boot_file_t*	file,
 			unsigned int		newpos);
 static int ext2_close(	struct boot_file_t*	file);
-static unsigned int ext2_ino_size(struct boot_file_t *file);
+static int ext2_ino_size(struct boot_file_t *file, unsigned int *size);
 
 struct fs_t ext2_filesystem =
 {
@@ -567,14 +567,15 @@ ext2_close(	struct boot_file_t*	file)
      return 0;
 }
 
-static unsigned int ext2_ino_size(struct boot_file_t *file)
+static int ext2_ino_size(struct boot_file_t *file, unsigned int *size)
 {
     struct ext2_inode ei;
 
     if (ext2fs_read_inode(fs, file->inode, &ei))
-	return 0;
+	return FILE_IOERR;
 
-    return ei.i_size;
+    *size = ei.i_size;
+    return FILE_ERR_OK;
 }
 
 static errcode_t linux_open (const char *name, int flags, io_channel * channel)

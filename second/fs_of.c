@@ -51,13 +51,14 @@ static int of_open(struct boot_file_t* file,
 static int of_read(struct boot_file_t* file, unsigned int size, void* buffer);
 static int of_seek(struct boot_file_t* file, unsigned int newpos);
 static int of_close(struct boot_file_t* file);
+static int of_ino_size(struct boot_file_t* file, unsigned int *size);
 
 
 static int of_net_open(struct boot_file_t* file,
 		       struct partition_t* part, struct boot_fspec_t* fspec);
 static int of_net_read(struct boot_file_t* file, unsigned int size, void* buffer);
 static int of_net_seek(struct boot_file_t* file, unsigned int newpos);
-static unsigned int of_net_ino_size(struct boot_file_t* file);
+static int of_net_ino_size(struct boot_file_t* file, unsigned int *size);
 
 
 struct fs_t of_filesystem =
@@ -66,7 +67,8 @@ struct fs_t of_filesystem =
      of_open,
      of_read,
      of_seek,
-     of_close
+     of_close,
+     of_ino_size,
 };
 
 struct fs_t of_net_filesystem =
@@ -122,6 +124,8 @@ of_open(struct boot_file_t* file,
 
      file->pos = 0;
      file->buffer = NULL;
+     file->devspec_cache = strdup(buffer);
+
      if ((file->of_device == PROM_INVALID_HANDLE) || (file->of_device == 0))
      {
 	  DEBUG_LEAVE(FILE_ERR_BAD_FSYS);
@@ -290,10 +294,45 @@ of_close(struct boot_file_t* file)
      return 0;
 }
 
-static unsigned int
-of_net_ino_size(struct boot_file_t* file)
+static int
+of_ino_size(struct boot_file_t* file, unsigned int *size)
 {
-	return file->len;
+     static char buffer[1<<20];
+     int read_count = 0;
+
+     if (file->len == 0) {
+          DEBUG_F("Estimating size of: %p\n", file->of_device);
+          while (prom_read(file->of_device, (void *)&buffer, sizeof(buffer))
+                 != 0) {
+               read_count++;
+               DEBUG_F("read_count == %d\n", read_count);
+          }
+          file->pos = 0;
+          file->len = read_count * sizeof(buffer);
+          /* sigh:
+           * prom_seek(file->of_device, file->pos);
+           * doen't work */
+          prom_close(file->of_device);
+          DEBUG_F("Re-Opening: \"%s\"\n", file->devspec_cache);
+          file->of_device = prom_open(file->devspec_cache);
+          DEBUG_F("file->of_device = %p\n", file->of_device);
+          if (file->of_device == 0) {
+               file->len = 0;
+               return FILE_IOERR;
+          }
+     }
+
+     DEBUG_F("Estimated size is: %Lu(%d)\n", (unsigned long long)file->len,
+             read_count);
+     *size = file->len;
+     return FILE_ERR_OK;
+}
+
+static int
+of_net_ino_size(struct boot_file_t* file, unsigned int *size)
+{
+	*size = file->len;
+	return FILE_ERR_OK;
 }
 
 /*
