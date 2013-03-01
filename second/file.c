@@ -163,9 +163,14 @@ extract_ipv4_args(char *imagepath, struct boot_fspec_t *result)
 	  args++; /* If comma(,) is not immediately followed by ':' then go past the , */
 
      /*
-      * read the arguments in order: siaddr,filename,ciaddr,giaddr,
+      * read the arguments in order: vtag,siaddr,filename,ciaddr,giaddr,
       * bootp-retries,tftp-retries,addl_prameters
       */
+     if ((tmp = strstr(imagepath, "vtag=")) != NULL) {
+	result->vtag = scopy(&str, &tmp);
+	args = tmp;
+     }
+
      result->siaddr = is_valid_ipv4_str(scopy(&str, &args));
      result->file = scopy(&str, &args);
      result->ciaddr = is_valid_ipv4_str(scopy(&str, &args));
@@ -330,6 +335,9 @@ extract_ipv6_args(char *imagepath, struct boot_fspec_t *result)
 
      if ((tmp = strstr(imagepath, "dhcpv6=")) != NULL)
 	result->dhcpv6 = scopy(&str, &tmp);
+
+     if ((tmp = strstr(imagepath, "vtag=")) != NULL)
+	result->vtag = scopy(&str, &tmp);
 
      if ((tmp = strstr(imagepath, "ciaddr=")) != NULL)
 	result->ciaddr = scopy(&str, &tmp);
