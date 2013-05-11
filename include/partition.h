@@ -37,8 +37,8 @@ struct partition_t {
 	int			part_number;
 	char			part_type[MAX_PART_NAME];
         char                    part_name[MAX_PART_NAME];
-	unsigned long  		part_start; /* In blocks */
-	unsigned long  		part_size; /* In blocks */
+	unsigned long long	part_start; /* In blocks */
+	unsigned long long	part_size; /* In blocks */
 	unsigned short		blocksize;
 	int			sys_ind; /* fs type */
 };

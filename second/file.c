@@ -590,7 +590,7 @@ file_block_open(	struct boot_file_t*	file,
 	  prom_printf("no partitions found.\n");
 #endif
      for (p = parts; p && !found; p=p->next) {
-	  DEBUG_F("number: %02d, start: 0x%08lx, length: 0x%08lx\n",
+	  DEBUG_F("number: %02d, start: 0x%08Lx, length: 0x%08Lx\n",
 		  p->part_number, p->part_start, p->part_size );
 	  if (partition == -1) {
 	       file->fs = fs_open( file, p, fspec );

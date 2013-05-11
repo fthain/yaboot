@@ -164,8 +164,8 @@ ext2_open(	struct boot_file_t*	file,
       */
      doff = dend = 0;
      if (part) {
-	  doff = (unsigned long long)(part->part_start) * part->blocksize;
-	  dend = doff + (unsigned long long)part->part_size * part->blocksize;
+	  doff = part->part_start * part->blocksize;
+	  dend = doff + part->part_size * part->blocksize;
      }
      cur_file = file;
 

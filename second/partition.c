@@ -68,7 +68,7 @@ static unsigned char block_buffer[MAX_BLOCK_SIZE];
 
 static void
 add_new_partition(struct partition_t**	list, int part_number, const char *part_type,
-		  const char *part_name, unsigned long part_start, unsigned long part_size,
+		  const char *part_name, unsigned long long part_start, unsigned long long part_size,
 		  unsigned short part_blocksize, int sys_ind)
 {
      struct partition_t*	part;
@@ -452,7 +452,7 @@ get_part_type(char *device, int partition)
 	  return '\0';
 
      for (p = parts; p && !found; p=p->next) {
-	  DEBUG_F("number: %02d, start: 0x%08lx, length: 0x%08lx, type: %s, name: %s\n",
+	  DEBUG_F("number: %02d, start: 0x%08Lx, length: 0x%08Lx, type: %s, name: %s\n",
 		  p->part_number, p->part_start, p->part_size, p->part_type, p->part_name);
 	  if ((partition >= 0) && (partition == p->part_number)) {
 	       type = strdup(p->part_type);
