@@ -157,6 +157,7 @@ clean:
 	find . -not -path './\{arch\}*' -name ',,*' | xargs rm -rf
 	-gunzip man/*.gz
 	rm -rf man.deb
+	-rm cscope.*
 
 cleandocs:
 	make -C doc clean
@@ -240,3 +241,8 @@ deinstall:
 	@echo "${ROOT}/etc/yaboot.conf has not been removed, you may remove it yourself if you wish."
 
 uninstall: deinstall
+
+.PHONY: cscope
+cscope:
+	(echo \-k; echo \-q; find . -name '*.[chS]' )> cscope.files
+	cscope -b -f cscope.out
