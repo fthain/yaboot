@@ -1,6 +1,8 @@
 /*
  *  partition.c - partition table support
  *
+ *  Copyright (C) 2013 Dinar Valeev
+ *
  *  Copyright (C) 2004 Sven Luther
  *
  *  Copyright (C) 2001, 2002 Ethan Benson
@@ -34,6 +36,7 @@
 #include "mac-part.h"
 #include "fdisk-part.h"
 #include "amiga-part.h"
+#include "gpt-part.h"
 #include "partition.h"
 #include "prom.h"
 #include "string.h"
@@ -183,6 +186,41 @@ partition_fdisk_lookup( const char *dev_name, prom_handle disk,
 	  }
      }
 }
+
+/* GPT partition format */
+static int gpt_magic_present(unsigned char *block_buffer, unsigned int prom_blksize)
+{
+	struct gpt_header *header = (struct gpt_header *)(block_buffer + prom_blksize);
+	return cpu_to_le64(header->signature) == GPT_HEADER_SIGNATURE;
+}
+
+static inline int
+guid_cmp (gpt_part_type_t left, gpt_part_type_t right)
+{
+	return memcmp(&left, &right, sizeof (gpt_part_type_t));
+}
+
+static void partition_gpt_lookup(prom_handle disk, unsigned int prom_blksize,
+							struct partition_t **list)
+{
+	int partition;
+	struct gpt_header *header = (struct gpt_header *)(block_buffer + prom_blksize);
+
+	if (prom_readblocks(disk, cpu_to_le64(header->partitions), 1, block_buffer) != 1) {
+		prom_printf("Can't read GPT partition table %Lu\n", header->partitions);
+		return;
+	}
+	struct gpt_partition *part = (struct gpt_partition *)(block_buffer);
+
+	for (partition = 1; partition <= cpu_to_le32(header->maxpart); partition++, part++) {
+		if ((!guid_cmp(part->type, GPT_BASIC_DATA))||(!guid_cmp(part->type, GPT_LINUX_NATIVE))||(!guid_cmp(part->type, GPT_LINUX_RAID))) {
+			add_new_partition(list, partition, "Linux", 0, le64_to_cpu(part->start), \
+						cpu_to_le64(part->end) - cpu_to_le64(part->start) + 1, \
+						prom_blksize, 1);
+		}
+	}
+}
+
 
 /* I don't know if it's possible to handle multisession and other multitrack
  * stuffs with the current OF disklabel package. This can still be implemented
@@ -357,14 +395,17 @@ partitions_lookup(const char *device)
 	  goto bail;
      }
 
-     /* Read boot blocs */
-     if (prom_readblocks(disk, 0, 1, block_buffer) != 1) {
+     /* Read boot blocks */
+     if (prom_readblocks(disk, 0, 2, block_buffer) != 1) {
 	  prom_printf("Can't read boot blocks\n");
 	  goto bail;
      }
      if (desc->signature == MAC_DRIVER_MAGIC) {
 	  /* pdisk partition format */
 	  partition_mac_lookup(device, disk, prom_blksize, &list);
+     } else if (gpt_magic_present(block_buffer, prom_blksize)) {
+	  /* gpt partition format */
+	  partition_gpt_lookup(disk, prom_blksize, &list);
      } else if ((block_buffer[510] == 0x55) && (block_buffer[511] == 0xaa)) {
 	  /* fdisk partition format */
 	  partition_fdisk_lookup(device, disk, prom_blksize, &list);
