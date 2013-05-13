@@ -44,7 +44,7 @@
 #include "errors.h"
 #include "debug.h"
 
-#define LOAD_BUFFER_SIZE	0x1800000
+#define LOAD_BUFFER_SIZE	0x2000000
 
 static int of_open(struct boot_file_t* file,
 		   struct partition_t* part, struct boot_fspec_t* fspec);
