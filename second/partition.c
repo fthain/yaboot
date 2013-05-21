@@ -63,7 +63,7 @@ static const char *valid_mac_partition_types[] = {
 #endif
 
 
-#define MAX_BLOCK_SIZE	2048
+#define MAX_BLOCK_SIZE 4096
 static unsigned char block_buffer[MAX_BLOCK_SIZE];
 
 static void
