@@ -64,7 +64,7 @@ static const char *valid_mac_partition_types[] = {
 
 
 #define MAX_BLOCK_SIZE 4096
-static unsigned char block_buffer[MAX_BLOCK_SIZE];
+static unsigned char block_buffer[MAX_BLOCK_SIZE * 2];
 
 static void
 add_new_partition(struct partition_t**	list, int part_number, const char *part_type,
