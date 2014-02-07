@@ -1507,7 +1507,8 @@ setup_display(void)
 	  0xff, 0xff, 0x55,
 	  0xff, 0xff, 0xff
      };
-     int i, result;
+     int i;
+     int __attribute__((unused)) result;
      prom_handle scrn = PROM_INVALID_HANDLE;
 
      /* Try Apple's mac-boot screen ihandle */
