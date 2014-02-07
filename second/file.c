@@ -659,7 +659,7 @@ int open_file(struct boot_fspec_t* spec, struct boot_file_t* file)
 {
      int result;
 
-     memset(file, 0, sizeof(struct boot_file_t*));
+     memset(file, 0, sizeof(*file));
      file->fs        = &fs_default;
 
      DEBUG_F("dev_path = %s\nfile_name = %s\npartition = %d\n",
