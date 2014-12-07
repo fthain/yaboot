@@ -280,19 +280,19 @@ scsi_ofpath()
 {
     case "$SCSI_DRIVER" in
 	aic7xxx)
-	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible` ; do
+	    HOST_LIST="$(for i in `find /proc/device-tree/ -name compatible` ; do
 			lgrep "$i" "^ADPT" "^pci900[45]" "^pciclass,01000" ; done)"
 	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
 	    echo "${DEVICE_PATH##*device-tree}/@$DEVICE_ID:$PARTITION"
 	    ;;
 	sym53c8xx)
-	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible` ; do
+	    HOST_LIST="$(for i in `find /proc/device-tree/ -name compatible` ; do
 			lgrep "$i" "^Symbios" "^pci1000" "^pciclass,01000" ; done)"
 	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
 	    echo "${DEVICE_PATH##*device-tree}/@$DEVICE_ID:$PARTITION"
 	    ;;
 	mesh)
-	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible` ; do
+	    HOST_LIST="$(for i in `find /proc/device-tree/ -name compatible` ; do
 			lgrep "$i" "mesh" ; done)"
 	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
 	    echo "${DEVICE_PATH##*device-tree}/@$DEVICE_ID:$PARTITION"
@@ -300,26 +300,26 @@ scsi_ofpath()
 	ata_k2|sata_svw)
             #Not all G5 device trees have a compatible "k2-sata" node 
             #per channel use parent
-	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible ` ; do
+	    HOST_LIST="$(for i in `find /proc/device-tree/ -name compatible ` ; do
 			lgrep "$i" "k2-s-ata" ; done | sort)"
 	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
 	    K2_DEVICE_ID=0
 	    while [ "$DEVICE_PATH" = "" ] ; do
 	        SCSI_HOSTNUMBER=`expr $SCSI_HOSTNUMBER - 1`
-	        let "K2_DEVICE_ID += 1"
+	        K2_DEVICE_ID=$(( $K2_DEVICE_ID + 1 ))
 	        DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
 	    done
 	    echo "${DEVICE_PATH##*device-tree}/k2-sata@$K2_DEVICE_ID/disk@0:$PARTITION"
 	    ;;
 	usb-storage)
-            HOST_LIST="$(for i in `find /proc/device-tree -name name | grep usb` ; do
+            HOST_LIST="$(for i in `find /proc/device-tree/ -name name | grep usb` ; do
                         lgrep "$i" "disk" ; done)"
             DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
             echo "${DEVICE_PATH##*device-tree}:$PARTITION"
 	    ;;
 	sbp2|"")
             # sbp-2 driver may not have a dir in /proc/scsi
-            HOST_LIST="$(for i in `find /proc/device-tree -name name` ; do
+            HOST_LIST="$(for i in `find /proc/device-tree/ -name name` ; do
                         lgrep "$i" "sbp-2" ; done)"
             if [ "$SCSI_HOSTNUMBER" = "" ] ; then
                 SCSI_HOSTNUMBER=1
