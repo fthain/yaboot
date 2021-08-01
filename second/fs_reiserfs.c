@@ -59,7 +59,7 @@ static struct reiserfs_state *INFO = &reiserfs;
 
 /* Adapted from GRUB: */
 static char FSYS_BUF[FSYSREISER_CACHE_SIZE];
-int errnum;
+static int errnum;
 
 
 static int
@@ -221,7 +221,8 @@ block_read( __u32 blockNr, __u32 start, __u32 len, char *buffer )
 	       j_len = le32_to_cpu((*journal_table)++);
 	       while ( i++ < j_len )
 	       {
-		    if ( le32_to_cpu(*journal_table++) == blockNr )
+		    int n = le32_to_cpu(*journal_table++);
+		    if ( n == blockNr )
 		    {
 			 journal_table += j_len - i;
 			 goto found;
@@ -240,8 +241,11 @@ block_read( __u32 blockNr, __u32 start, __u32 len, char *buffer )
 
 	       j_len = le32_to_cpu(desc.j_len);
 	       while ( i < j_len && i < JOURNAL_TRANS_HALF )
-		    if ( le32_to_cpu(desc.j_realblock[i++]) == blockNr )
+	       {
+		    int n = le32_to_cpu(desc.j_realblock[i++]);
+		    if ( n == blockNr )
 			 goto found;
+	       }
 
 	       if ( j_len >= JOURNAL_TRANS_HALF )
 	       {
@@ -252,8 +256,11 @@ block_read( __u32 blockNr, __u32 start, __u32 len, char *buffer )
 			 return 0;
 
 		    while ( i < j_len )
-			 if ( le32_to_cpu(commit.j_realblock[i++ - JOURNAL_TRANS_HALF]) == blockNr )
+		    {
+			int n = le32_to_cpu(commit.j_realblock[i++ - JOURNAL_TRANS_HALF]);
+			if ( n == blockNr )
 			      goto found;
+		    }
 	       }
 	  }
 	  goto not_found;
@@ -620,8 +627,8 @@ next_key( void )
 	  {
 	       /* Save depth as using it twice as args to read_tree_node()
 	        * has undefined behaviour */
-	       __u16 d = depth;
-	       cache = read_tree_node( INFO->blocks[d], --depth );
+	       __u16 d = depth--;
+	       cache = read_tree_node( INFO->blocks[d], depth );
 	       if ( !cache )
 		    return 0;
 	  }
