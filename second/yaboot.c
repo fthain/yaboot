@@ -1041,7 +1041,7 @@ yaboot_text_ui(void)
 
 	  if (strlen(boot.file) && !strcmp(boot.file,"\\\\") && params.kernel.file[0] != '/'
 	      && params.kernel.file[0] != '\\') {
-	       loc=(char*)malloc(strlen(params.kernel.file)+3);
+	       loc=malloc(strlen(params.kernel.file)+3);
 	       if (!loc) {
 		    prom_printf ("malloc error\n");
 		    goto next;
@@ -1200,9 +1200,9 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
      unsigned long	loadaddr;
 
      /* Read the rest of the Elf header... */
-     if ((*(file->fs->read))(file, size, &e->e_version) < size) {
+     if (file->fs->read(file, size, &e->e_version) < size) {
 	  prom_printf("\nCan't read Elf32 image header\n");
-	  goto bail;
+	  return 0;
      }
 
      DEBUG_F("Elf32 header:\n");
@@ -1219,18 +1219,18 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 
      loadinfo->entry = e->e_entry;
 
-     ph = (Elf32_Phdr *)malloc(sizeof(Elf32_Phdr) * e->e_phnum);
+     ph = malloc(sizeof(Elf32_Phdr) * e->e_phnum);
      if (!ph) {
 	  prom_printf ("Malloc error\n");
-	  goto bail;
+	  return 0;
      }
 
      /* Now, we read the section header */
-     if ((*(file->fs->seek))(file, e->e_phoff) != FILE_ERR_OK) {
+     if (file->fs->seek(file, e->e_phoff) != FILE_ERR_OK) {
 	  prom_printf ("seek error\n");
 	  goto bail;
      }
-     if ((*(file->fs->read))(file, sizeof(Elf32_Phdr) * e->e_phnum, ph) !=
+     if (file->fs->read(file, sizeof(Elf32_Phdr) * e->e_phnum, ph) !=
 	 sizeof(Elf32_Phdr) * e->e_phnum) {
 	  prom_printf ("read error\n");
 	  goto bail;
@@ -1299,13 +1299,13 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 	       continue;
 
 	  /* Now, we skip to the image itself */
-	  if ((*(file->fs->seek))(file, p->p_offset) != FILE_ERR_OK) {
+	  if (file->fs->seek(file, p->p_offset) != FILE_ERR_OK) {
 	       prom_printf ("Seek error\n");
 	       prom_release(loadinfo->base, loadinfo->memsize);
 	       goto bail;
 	  }
 	  offset = p->p_vaddr - loadinfo->load_loc;
-	  if ((*(file->fs->read))(file, p->p_filesz, loadinfo->base+offset) != p->p_filesz) {
+	  if (file->fs->read(file, p->p_filesz, loadinfo->base+offset) != p->p_filesz) {
 	       prom_printf ("Read failed\n");
 	       prom_release(loadinfo->base, loadinfo->memsize);
 	       goto bail;
@@ -1318,8 +1318,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
      return 1;
 
 bail:
-     if (ph)
-       free(ph);
+     free(ph);
      return 0;
 }
 
@@ -1333,9 +1332,9 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      unsigned long	loadaddr;
 
      /* Read the rest of the Elf header... */
-     if ((*(file->fs->read))(file, size, &e->e_version) < size) {
+     if (file->fs->read(file, size, &e->e_version) < size) {
 	  prom_printf("\nCan't read Elf64 image header\n");
-	  goto bail;
+	  return 0;
      }
 
      DEBUG_F("Elf64 header:\n");
@@ -1355,15 +1354,15 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      ph = (Elf64_Phdr *)malloc(sizeof(Elf64_Phdr) * e->e_phnum);
      if (!ph) {
 	  prom_printf ("Malloc error\n");
-	  goto bail;
+	  return 0;
      }
 
      /* Now, we read the section header */
-     if ((*(file->fs->seek))(file, e->e_phoff) != FILE_ERR_OK) {
+     if (file->fs->seek(file, e->e_phoff) != FILE_ERR_OK) {
 	  prom_printf ("Seek error\n");
 	  goto bail;
      }
-     if ((*(file->fs->read))(file, sizeof(Elf64_Phdr) * e->e_phnum, ph) !=
+     if (file->fs->read(file, sizeof(Elf64_Phdr) * e->e_phnum, ph) !=
 	 sizeof(Elf64_Phdr) * e->e_phnum) {
 	  prom_printf ("Read error\n");
 	  goto bail;
@@ -1450,8 +1449,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      return 1;
 
 bail:
-     if (ph)
-       free(ph);
+     free(ph);
      return 0;
 }
 
