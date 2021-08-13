@@ -363,8 +363,9 @@ load_config_file(struct boot_fspec_t *fspec)
          /* change the variable bellow to get the MAC dinamicaly */
          char * macaddr = NULL;
          int default_mac = 0;
-
-         macaddr = prom_get_mac(prom_get_netinfo());
+         struct bootp_packet *info = prom_get_netinfo();
+         macaddr = prom_get_mac(info);
+         free(info);
          default_mac = cfg_set_default_by_mac(macaddr);
          if (default_mac >= 1) {
             prom_printf("Default label was changed to macaddr label.\n");
@@ -448,7 +449,7 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
 
      packet = prom_get_netinfo();
      if (!packet)
-          goto out;
+          return 0;
 
      /*
       * First, try to match on mac address with the hardware type
@@ -487,6 +488,7 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
 	  orig_fspec->file = fspec.file;
      else
 	  free(fspec.file);
+     free(packet);
      return rc;
 }
 

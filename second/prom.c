@@ -702,9 +702,8 @@ prom_pause(void)
  */
 struct bootp_packet * prom_get_netinfo (void)
 {
-     void *bootp_response = NULL;
+     char *bootp_response;
      char *propname;
-     struct bootp_packet *packet;
      /* struct bootp_packet contains a VLA, so sizeof won't work.
         the VLA /must/ be the last field in the structure so use it's
         offset as a good estimate of the packet size */
@@ -742,11 +741,23 @@ struct bootp_packet * prom_get_netinfo (void)
      if (!bootp_response)
          return NULL;
 
-     if (prom_getprop(chosen, propname, bootp_response, size) < 0)
-         return NULL;
+	if (prom_getprop(chosen, propname, bootp_response, size) < 0) {
+		free(bootp_response);
+		return NULL;
+	}
 
-     packet = bootp_response + offset;
-     return packet;
+	if (offset) {
+		struct bootp_packet *packet = malloc(sizeof(struct bootp_packet));
+		if (!packet) {
+			free(bootp_response);
+			return NULL;
+		}
+		memcpy(packet, bootp_response + offset, sizeof(struct bootp_packet));
+		free(bootp_response);
+		return packet;
+	} else {
+		return (struct bootp_packet *)bootp_response;
+	}
 }
 
 /*
