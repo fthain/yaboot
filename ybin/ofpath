@@ -899,6 +899,8 @@ elif (cat /proc/cpuinfo 2>/dev/null | grep ^motherboard | grep -q AAPL) ; then
     SUBARCH=OldWorld
 elif (cat /proc/cpuinfo 2> /dev/null | grep ^machine | grep -q 'CHRP IBM') ; then
     SUBARCH=CHRP
+elif (cat /proc/cpuinfo 2> /dev/null | grep ^platform | grep -q 'Maple') ; then
+    SUBARCH=Maple
 elif (cat /proc/cpuinfo 2>/dev/null | grep ^machine | grep -q 'CHRP Pegasos') ; then
     SUBARCH=Pegasos
 else
@@ -930,7 +932,7 @@ case "$SUBARCH" in
     OldWorld)
 	oldworld || exit 1
 	;;
-    CHRP)
+    CHRP|Maple)
 	chrp || exit 1
 	;;
 esac
