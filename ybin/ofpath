@@ -542,6 +542,19 @@ oldworld()
 		    mesh)
 		    echo $(cat /proc/device-tree/$ALIASES/scsi)/sd\@$DEVICE_ID:$PARTITION
 		    ;;
+		    pata_macio)
+		    case "$DEVNODE" in
+		        sda|sdc)
+		        echo $(cat /proc/device-tree/$ALIASES/ide0)\@$DEVICE_ID$PART
+		        ;;
+		        sdb|sdd)
+		        echo $(cat /proc/device-tree/$ALIASES/ide1)\@$DEVICE_ID$PART
+		        ;;
+		        sd*)
+		        echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
+		        ;;
+		    esac
+		    ;;
 		    *)
 		    echo 1>&2 "$PRG: Driver $SCSI_DRIVER is not supported"
 		    return 1
