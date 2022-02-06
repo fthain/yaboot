@@ -111,9 +111,11 @@ lgcc = `$(CC) -m32 -print-libgcc-file-name`
 
 all: yaboot addnote mkofboot
 
-yaboot: $(OBJS)
+yaboot: $(OBJS) addnote
 	$(LD) $(LFLAGS) $(OBJS) $(LLIBS) $(lgcc) -o second/$@
 	chmod -x second/yaboot
+	cp second/yaboot second/yaboot.chrp
+	util/addnote second/yaboot.chrp
 
 addnote:
 	$(CC) $(UCFLAGS) -o util/addnote util/addnote.c
@@ -193,6 +195,7 @@ install: all
 	install -d -o root -g root -m 0755 ${ROOT}/${PREFIX}/${MANDIR}/man5/
 	install -d -o root -g root -m 0755 ${ROOT}/${PREFIX}/${MANDIR}/man8/
 	install -o root -g root -m 0644 second/yaboot ${ROOT}/$(PREFIX)/lib/yaboot
+	install -o root -g root -m 0644 second/yaboot.chrp ${ROOT}/$(PREFIX)/lib/yaboot
 	install -o root -g root -m 0755 util/addnote ${ROOT}/${PREFIX}/lib/yaboot/addnote
 	install -o root -g root -m 0644 first/ofboot ${ROOT}/${PREFIX}/lib/yaboot/ofboot
 	install -o root -g root -m 0755 ybin/ofpath ${ROOT}/${PREFIX}/sbin/ofpath
