@@ -1,6 +1,7 @@
 ## Setup
 
 include Config
+include Config.gentoo
 
 VERSION = 1.3.17
 # Debug mode (spam/verbose)
@@ -92,7 +93,7 @@ OBJS = second/crt0.o second/yaboot.o second/cache.o second/prom.o second/file.o 
 	second/fs_of.o second/fs_ext2.o second/fs_iso.o second/fs_swap.o \
 	second/iso_util.o \
 	lib/nonstd.o \
-	lib/nosys.o lib/string.o lib/strtol.o lib/vsprintf.o lib/ctype.o lib/malloc.o lib/strstr.o
+	lib/nosys.o lib/string.o lib/strtol.o lib/vsprintf.o lib/ctype.o lib/malloc.o lib/strstr.o lib/ssp.o
 
 ifeq ($(USE_MD5_PASSWORDS),y)
 OBJS += second/md5.o
